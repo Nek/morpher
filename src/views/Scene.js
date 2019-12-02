@@ -1,7 +1,7 @@
-import React, { useRef, useMemo, useState } from "react";
+import React, { useState } from "react";
 import * as THREE from "three";
 import { Noise } from "noisejs";
-import { useFrame, useRender } from "react-three-fiber";
+import { useFrame } from "react-three-fiber";
 
 const noise1 = new Noise(1);
 const noise2 = new Noise(5);
@@ -9,8 +9,7 @@ const noise2 = new Noise(5);
 const vertices = Array.from({ length: 10000 }).flatMap((_, i) => {
   const pX = Math.floor(i / 100) - 50;
   const pY = (i % 100) - 50;
-  const pZ =
-    noise1.perlin2(Math.floor(i / 100) / 10, (i % 100) / 10) * 10 ; //-100 + Math.random() * 20;
+  const pZ = noise1.perlin2(Math.floor(i / 100) / 10, (i % 100) / 10) * 5 - 30;
   const particle = [pX, pY, pZ];
   return particle;
 });
@@ -19,7 +18,7 @@ const morphVertices = Array.from({ length: 10000 }).flatMap((_, i) => {
   const pX = Math.floor(i / 100) - 50;
   const pY = (i % 100) - 50;
   const pZ =
-    noise2.perlin2(Math.floor(i / 100) / 10, (i % 100) / 10) * 100 - 20; //-100 + Math.random() * 20;
+    noise2.perlin2(Math.floor(i / 100) / 10, (i % 100) / 10) * 100 - 30;
   const particle = [pX, pY, pZ];
   return particle;
 });
@@ -56,7 +55,7 @@ function Scene() {
       <pointsMaterial
         attach="material"
         color="white"
-        size={1}
+        size={2}
         sizeAttenuation={false}
         morphTargets={true}
       />
