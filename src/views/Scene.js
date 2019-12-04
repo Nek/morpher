@@ -33,8 +33,6 @@ const morphVertices = Array.from({ length: 10000 }).flatMap((_, i) => {
   return particle;
 });
 
-const blend = (k, a, b) => a.map((_, i) => a[i] * k + b[i] * (1 - k));
-
 function Scene() {
   const [morph, setMorph] = useState(0);
 
@@ -45,15 +43,18 @@ function Scene() {
         pointTexture: {
           type: "t",
           value: new THREE.TextureLoader().load("assets/circle.png")
-        }
+        },
+        morph: { value: 0 }
       },
       vertexShader: `
+      uniform float morph;
 attribute float size;
 attribute vec3 customColor;
+attribute vec3 morphPosition;
 varying vec3 vColor;
 void main() {
     vColor = customColor;
-    vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+    vec4 mvPosition = modelViewMatrix * vec4( position * morph + morphPosition * (1.0 - morph), 1.0 );
     gl_PointSize = size * ( 300.0 / -mvPosition.z );
     gl_Position = projectionMatrix * mvPosition;
 }`,
@@ -76,20 +77,23 @@ void main() {
     setMorph(Math.sin(state.clock.getElapsedTime()));
   });
   return (
-    <points
-      morphTargetInfluences={[morph]}
-      morphTargetDictionary={{ spikes: morphVertices }}
-    >
-      <shaderMaterial attach="material" {...data} />
+    <points>
+      <shaderMaterial
+        attach="material"
+        {...data}
+        uniforms-morph-value={morph}
+      />
       <bufferGeometry
         ref={geo => {
           if (geo) {
             geo.setAttribute(
               "position",
-              new THREE.BufferAttribute(
-                new Float32Array(blend(morph, vertices, morphVertices)),
-                3
-              )
+              new THREE.BufferAttribute(new Float32Array(vertices), 3)
+            );
+
+            geo.setAttribute(
+              "morphPosition",
+              new THREE.BufferAttribute(new Float32Array(morphVertices), 3)
             );
             geo.setAttribute(
               "customColor",
@@ -99,13 +103,6 @@ void main() {
               "size",
               new THREE.BufferAttribute(new Float32Array(sizes), 1)
             );
-
-            geo.morphAttributes.position = [];
-            geo.morphAttributes.position[0] = new THREE.BufferAttribute(
-              new Float32Array(morphVertices),
-              3
-            );
-            geo.morphTargets = [0];
           }
         }}
         attach="geometry"
