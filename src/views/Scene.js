@@ -21,7 +21,8 @@ const colors = Array.from({ length: 10000 }).flatMap((_, i) => {
 });
 
 const sizes = Array.from({ length: 10000 }).flatMap((_, i) => {
-  return 0.5;
+  const pZ = noise2.perlin2(Math.floor(i / 100) / 10, (i % 100) / 10);
+  return pZ;
 });
 
 const morphVertices = Array.from({ length: 10000 }).flatMap((_, i) => {
