@@ -9,7 +9,8 @@ const noise2 = new Noise(5);
 const vertices = Array.from({ length: 10000 }).flatMap((_, i) => {
   const pX = Math.floor(i / 100) - 50;
   const pY = (i % 100) - 50;
-  const pZ = noise1.perlin2(Math.floor(i / 100) / 10, (i % 100) / 10) * 5 - 30;
+  const pZ =
+    noise1.perlin2(Math.floor(i / 100) / 100, (i % 100) / 100) * 5 - 30;
   const particle = [pX, pY, pZ];
   return particle;
 });
@@ -17,8 +18,7 @@ const vertices = Array.from({ length: 10000 }).flatMap((_, i) => {
 const morphVertices = Array.from({ length: 10000 }).flatMap((_, i) => {
   const pX = Math.floor(i / 100) - 50;
   const pY = (i % 100) - 50;
-  const pZ =
-    noise2.perlin2(Math.floor(i / 100) / 10, (i % 100) / 10) * 100 - 30;
+  const pZ = noise2.perlin2(Math.floor(i / 100) / 10, (i % 100) / 10) * 50 - 30;
   const particle = [pX, pY, pZ];
   return particle;
 });
