@@ -3,37 +3,7 @@ import * as THREE from "three";
 import { Noise } from "noisejs";
 import { useFrame } from "react-three-fiber";
 
-const noise1 = new Noise(1);
-const noise2 = new Noise(5);
-
-const vertices = Array.from({ length: 10000 }).flatMap((_, i) => {
-  const pX = Math.floor(i / 100) - 50;
-  const pY = (i % 100) - 50;
-  const pZ =
-    noise1.perlin2(Math.floor(i / 100) / 100, (i % 100) / 100) * 10 - 30;
-  const particle = [pX, pY, pZ];
-  return particle;
-});
-
-const color = new THREE.Color(0xffffff);
-const colors = Array.from({ length: 10000 }).flatMap((_, i) => {
-  return color.toArray();
-});
-
-const sizes = Array.from({ length: 10000 }).flatMap((_, i) => {
-  const pZ = noise2.perlin2(Math.floor(i / 100) / 10, (i % 100) / 10);
-  return pZ;
-});
-
 const count = Array.from({ length: 10000 }).map((_, i) => i);
-
-const morphVertices = Array.from({ length: 10000 }).flatMap((_, i) => {
-  const pX = Math.floor(i / 100) - 50;
-  const pY = (i % 100) - 50;
-  const pZ = noise2.perlin2(Math.floor(i / 100) / 10, (i % 100) / 10) * 50 - 30;
-  const particle = [pX, pY, pZ];
-  return particle;
-});
 
 function Scene() {
   const [morph, setMorph] = useState(0);
@@ -41,20 +11,14 @@ function Scene() {
   const data = useMemo(
     () => ({
       uniforms: {
-        color: { value: new THREE.Color(0xffffff) },
-        pointTexture: {
-          type: "t",
-          value: new THREE.TextureLoader().load("assets/circle.png")
-        },
         morph: { value: 0 }
       },
       vertexShader: `
-      uniform float morph;
+uniform float morph;
 attribute float size;
-attribute vec3 customColor;
+attribute float morphSize;
 attribute vec3 morphPosition;
 attribute float count;
-varying vec3 vColor;
 
 vec4 mod289(vec4 x)
 {
@@ -157,21 +121,32 @@ float pnoise(vec2 P, vec2 rep)
 }
 
 void main() {
-    vColor = customColor;
+    float scale = 10.0;
     float k = 100.0;
-    vec3 position = vec3(floor(count / k) - 50.0, mod(count, k) - k / 2.0, cnoise(vec2(floor(count / k) / k, mod(count, k) / k)) * 10.0 - 30.0);
-    vec3 morphPosition = vec3(floor(count / k) - 50.0, mod(count, k) - 50.0, cnoise(vec2(floor(count / k) / k + k, mod(count, k) / k + k)) * 10.0 - 30.0);
-    vec4 mvPosition = modelViewMatrix * vec4( position * morph + morphPosition * (1.0 - morph), 1.0 );
-    gl_PointSize = size * ( 300.0 / -mvPosition.z );
+    float x = floor(count / k) - k / 2.0;
+    float y = mod(count, k) - k / 2.0;
+    vec3 position = vec3(x, y, cnoise(vec2(floor(count / k) / k * scale, mod(count, k) / k * 10.0)) * scale - 30.0);
+    vec3 morphPosition = vec3(x, y, cnoise(vec2(floor(count / k) / k * scale + 1000.0, mod(count, k) / k * scale + 1000.0)) * 35.0 - 30.0);
+    vec4 mvPosition = modelViewMatrix * vec4( mix(position, morphPosition, morph), 1.0 );
+    float size = cnoise(vec2(floor(count / k) / k * scale, mod(count, k) / k * 10.0));
+        float morphSize = cnoise(vec2(floor(count / k) / k * scale + 1000.0, mod(count, k) / k * 10.0 + 1000.0));
+
+    gl_PointSize = mix(size, morphSize, morph) * ( 300.0 / -mvPosition.z );
     gl_Position = projectionMatrix * mvPosition;
 }`,
       fragmentShader: `
-uniform vec3 color;
-uniform sampler2D pointTexture;
-varying vec3 vColor;
 void main() {
-    gl_FragColor = vec4( color * vColor, 1.0 );
-    //gl_FragColor = gl_FragColor * texture2D( pointTexture, gl_PointCoord );
+      float r = 0.0, delta = 0.0, alpha = 1.0;
+    vec2 cxy = 2.0 * gl_PointCoord - 1.0;
+    r = dot(cxy, cxy);
+    #ifdef GL_OES_standard_derivatives
+    delta = fwidth(r);
+    alpha = 1.0 - smoothstep(1.0 - delta, 1.0 + delta, r);
+#endif
+    if (r > 1.0) {
+        discard;
+    }
+    gl_FragColor =  vec4(1.0) * alpha;
 }`
     }),
     []
@@ -186,26 +161,27 @@ void main() {
         attach="material"
         {...data}
         uniforms-morph-value={morph}
+        derivatives={true}
       />
       <bufferGeometry
         ref={geo => {
           if (geo) {
             geo.setAttribute(
               "position",
-              new THREE.BufferAttribute(new Float32Array(vertices), 3)
+              new THREE.BufferAttribute(new Float32Array(30000), 3)
             );
 
             geo.setAttribute(
               "morphPosition",
-              new THREE.BufferAttribute(new Float32Array(morphVertices), 3)
-            );
-            geo.setAttribute(
-              "customColor",
-              new THREE.BufferAttribute(new Float32Array(colors), 3)
+              new THREE.BufferAttribute(new Float32Array(30000), 3)
             );
             geo.setAttribute(
               "size",
-              new THREE.BufferAttribute(new Float32Array(sizes), 1)
+              new THREE.BufferAttribute(new Float32Array(10000), 1)
+            );
+            geo.setAttribute(
+              "morphSize",
+              new THREE.BufferAttribute(new Float32Array(10000), 1)
             );
             geo.setAttribute(
               "count",
