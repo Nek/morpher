@@ -3,6 +3,7 @@ attribute float size;
 attribute float morphSize;
 attribute vec3 morphPosition;
 attribute float count;
+uniform float amount;
 
 vec4 mod289(vec4 x)
 {
@@ -105,16 +106,16 @@ float pnoise(vec2 P, vec2 rep)
 }
 
 void main() {
-    float scale = 10.0;
-    float k = 100.0;
+    float scale = 20.0;
+    float k = sqrt(amount);
     float x = floor(count / k) - k / 2.0;
     float y = mod(count, k) - k / 2.0;
     vec3 position = vec3(x, y, cnoise(vec2(floor(count / k) / k * scale, mod(count, k) / k * 10.0)) * scale - 30.0);
-    vec3 morphPosition = vec3(x, y, cnoise(vec2(floor(count / k) / k * scale + 1000.0, mod(count, k) / k * scale + 1000.0)) * 35.0 - 30.0);
+    vec3 morphPosition = vec3(x, y, cnoise(vec2(floor(count / k) / k * scale + amount / 10.0, mod(count, k) / k * scale + amount / 10.0)) * 35.0 - 30.0);
     vec4 mvPosition = modelViewMatrix * vec4(mix(position, morphPosition, morph), 1.0);
-    float size = cnoise(vec2(floor(count / k) / k * scale, mod(count, k) / k * 10.0));
-    float morphSize = cnoise(vec2(floor(count / k) / k * scale + 1000.0, mod(count, k) / k * 10.0 + 1000.0));
+    float size = 0.5 + cnoise(vec2(floor(count / k) / k * scale, mod(count, k) / k * 10.0));
+    float morphSize = 0.5 + cnoise(vec2(floor(count / k) / k * scale + amount / 10.0, mod(count, k) / k * 10.0 + amount / 10.0));
 
-    gl_PointSize = mix(size, morphSize, morph) * (300.0 / -mvPosition.z);
+    gl_PointSize = max(mix(size, morph, morphSize) * (300.0 / -mvPosition.z), 1.0);
     gl_Position = projectionMatrix * mvPosition;
 }

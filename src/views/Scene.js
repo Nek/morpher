@@ -4,8 +4,7 @@ import { useFrame } from "react-three-fiber";
 import fragmentShader from "./points-frag.glsl";
 import vertexShader from "./points-vert.glsl";
 
-
-const count = Array.from({ length: 10000 }).map((_, i) => i);
+const amount = 250000;
 
 function Scene() {
   const [morph, setMorph] = useState(0);
@@ -13,7 +12,8 @@ function Scene() {
   const data = useMemo(
     () => ({
       uniforms: {
-        morph: { value: 0 }
+        morph: { value: 0 },
+        amount: { value: amount }
       },
       vertexShader,
       fragmentShader
@@ -37,24 +37,24 @@ function Scene() {
           if (geo) {
             geo.setAttribute(
               "position",
-              new THREE.BufferAttribute(new Float32Array(30000), 3)
+              new THREE.BufferAttribute(new Float32Array(amount * 3), 3)
             );
 
             geo.setAttribute(
               "morphPosition",
-              new THREE.BufferAttribute(new Float32Array(30000), 3)
+              new THREE.BufferAttribute(new Float32Array(amount * 3), 3)
             );
             geo.setAttribute(
               "size",
-              new THREE.BufferAttribute(new Float32Array(10000), 1)
+              new THREE.BufferAttribute(new Float32Array(amount), 1)
             );
             geo.setAttribute(
               "morphSize",
-              new THREE.BufferAttribute(new Float32Array(10000), 1)
+              new THREE.BufferAttribute(new Float32Array(amount), 1)
             );
             geo.setAttribute(
               "count",
-              new THREE.BufferAttribute(new Float32Array(count), 1)
+              new THREE.BufferAttribute(new Float32Array(Array.from({ length: amount }).map((_, i) => i)), 1)
             );
           }
         }}
