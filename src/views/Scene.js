@@ -9,7 +9,7 @@ const amount = 250000;
 function Scene() {
   const [morph, setMorph] = useState(0);
 
-  const data = useMemo(
+  const shader = useMemo(
     () => ({
       uniforms: {
         morph: { value: 0 },
@@ -28,38 +28,44 @@ function Scene() {
     <points>
       <shaderMaterial
         attach="material"
-        {...data}
+        {...shader}
         uniforms-morph-value={morph}
         derivatives={true}
       />
-      <bufferGeometry
-        ref={geo => {
-          if (geo) {
-            geo.setAttribute(
-              "position",
-              new THREE.BufferAttribute(new Float32Array(amount * 3), 3)
-            );
-
-            geo.setAttribute(
-              "morphPosition",
-              new THREE.BufferAttribute(new Float32Array(amount * 3), 3)
-            );
-            geo.setAttribute(
-              "size",
-              new THREE.BufferAttribute(new Float32Array(amount), 1)
-            );
-            geo.setAttribute(
-              "morphSize",
-              new THREE.BufferAttribute(new Float32Array(amount), 1)
-            );
-            geo.setAttribute(
-              "count",
-              new THREE.BufferAttribute(new Float32Array(Array.from({ length: amount }).map((_, i) => i)), 1)
-            );
+      <bufferGeometry attach="geometry">
+        <bufferAttribute
+          attachObject={["attributes", "position"]}
+          count={amount}
+          array={new Float32Array(amount * 3)}
+          itemSize={3}
+        />
+        <bufferAttribute
+          attachObject={["attributes", "morphPosition"]}
+          count={amount}
+          array={new Float32Array(amount * 3)}
+          itemSize={3}
+        />
+        <bufferAttribute
+          attachObject={["attributes", "size"]}
+          count={amount}
+          array={new Float32Array(amount)}
+          itemSize={1}
+        />
+        <bufferAttribute
+          attachObject={["attributes", "morphSize"]}
+          count={amount}
+          array={new Float32Array(amount)}
+          itemSize={1}
+        />
+        <bufferAttribute
+          attachObject={["attributes", "count"]}
+          count={amount}
+          array={
+            new Float32Array(Array.from({ length: amount }).map((_, i) => i))
           }
-        }}
-        attach="geometry"
-      />
+          itemSize={1}
+        />
+      </bufferGeometry>
     </points>
   );
 }
